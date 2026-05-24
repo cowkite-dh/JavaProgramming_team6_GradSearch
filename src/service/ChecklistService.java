@@ -2,9 +2,9 @@
  * 
  * @Project: 졸업 요건 확인 서비스 
  * @프로그램 설명: 
- * 	- 졸업 요건 확인(수업 관련 제외)을 위한 서비스
- *  - 수업 관련을 제외한 요건(지도교수 상담, 토익 점수 등)만 확인
- *  - 해당 요소는 체크리스트 방식으로 자율적으로 만들 수 있게 되어 있음
+ *  - 비교과 졸업요건 체크리스트 관리 서비스
+ *  - TOEIC, 지도교수상담 항목은 항상 1개씩 존재(고정)
+ *  - 그 외 항목은 사용자가 자유롭게 추가/삭제/체크 가능
  *
  * ChecklistService.java
  *
@@ -19,11 +19,19 @@ import java.util.*;
 public class ChecklistService {
     private List<ChecklistItem> items;
 
+    private static final int TOEIC_INDEX = 0;
+    private static final int ADVISOR_INDEX = 1;
+    
     /**
 	 * 객체 생성 메소드(ChecklistService)
+	 * - items[0] = TOEIC (항상 존재)
+	 * - items[1] = 지도교수 상담 (항상 존재)
 	 */
     public ChecklistService() {
     	this.items = new ArrayList<>();
+    	
+    	items.add(new ToeicChecklistItem());
+    	items.add(new AdvisorChecklistItem());
     }
     
     /**
@@ -49,38 +57,76 @@ public class ChecklistService {
     /**
 	 * 아이템 삭제 메소드 (removeItem)
 	 * 
-	 * @param title 삭제할 아이템의 이름   
+	 * @param index 삭제할 아이템의 인덱스   
 	 * @return 
 	 * 		 0: 삭제 성공
 	 * 		-1: 삭제 실패 (입력 오류)  
 	 */
-    public int removeItem(String title) {
-    	if (title == null)
-    	{
-    		System.out.println("잘못된 입력입니다.");
-    		return -1;	
-    	}
-    	
-    	String target = title.trim();
-    	if (target.isEmpty())
-    	{
+    public int removeItem(int index) {
+        if (index < 0 || index >= items.size())
+        {
+        	System.out.println("잘못된 입력입니다.");
+        	return -1;	
+        }
+        
+        if (index == TOEIC_INDEX || index == ADVISOR_INDEX) {
+        	System.out.println("TOEIC/지도교수 상담 항목은 삭제할 수 없습니다.");
+        	return -1;
+        }
+        
+        items.remove(index);
+        return 0;
+    }
+    
+    // -----------------------------
+    // TOEIC: index 0
+    // -----------------------------
+    
+    private ToeicChecklistItem toeic() {
+    	return (ToeicChecklistItem) items.get(TOEIC_INDEX);
+    }
+
+    public int setToeicTargetScore(int targetScore) {
+    	toeic().setTargetScore(targetScore);
+    	return 0;
+    }
+
+    public int setToeicActualScore(int actualScore) {
+    	toeic().setActualScore(actualScore);
+    	return 0;
+    }
+    
+    // -----------------------------
+    // 지도 교수: index 1
+    // -----------------------------
+    
+    private AdvisorChecklistItem advisor() {
+    	return (AdvisorChecklistItem) items.get(ADVISOR_INDEX);
+    }
+
+    /** 상담 학기 추가 */
+    public int addAdvisorSemester(String semester) {
+    	if (semester == null || semester.trim().isEmpty()) {
     		System.out.println("잘못된 입력입니다.");
     		return -1;
     	}
-    	
-    	for(int i = 0; i < items.size(); i++) {
-    		ChecklistItem item = items.get(i);
-    		String itemTitle = item.getTitle();
-    		
-    		if(target.equals(itemTitle.trim()))
-    		{
-    			items.remove(i);
-    			return 0;
-    		}
-    	}
-    	
-    	return -1;
+    	advisor().setSemester(semester.trim());
+    	return 0;
     }
+
+    /** 상담 학기 삭제(학기 리스트 인덱스로 삭제) */
+    public int removeAdvisorSemester(int semesterIndex) {
+    	int result = advisor().removeSemester(semesterIndex);
+    	if (result == -1) {
+    		System.out.println("잘못된 학기 인덱스입니다.");
+    	}
+    	return result;
+    }
+    
+    // -----------------------------
+    // 공통 통계/출력
+    // -----------------------------
+    
     
     /**
 	 * 달성한 아이템 갯수 반환 메소드 (getCompleteCount)  
