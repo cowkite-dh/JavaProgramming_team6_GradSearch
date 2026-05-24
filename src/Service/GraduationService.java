@@ -32,7 +32,8 @@ public class GraduationService {
     /**
 	 * 과목 유형별 취득 학점 계산 메소드(calcCredits) 단, 재수강처럼 pass를 안 했을 경우에는 제외.
 	 * @param type 취득한 학점을 계산할 과목 유형(교양, 전공 등등...)
-	 * @return sum 취득한 학점 
+	 * @return 
+	 * 		 sum(정수): 취득한 학점 
 	 */
     public int calcCredits(CourseType type) {
         int sum = 0;
@@ -40,7 +41,7 @@ public class GraduationService {
         for (TakenCourse tc : student.getTakenCourses()) {
             Course c = tc.getCourse();
             
-            if (c.getType() == type && tc.isPassed()) {
+            if (c.getType() == type && tc.getPassed()) {
                 sum += c.getCredits();
             }
         }
@@ -77,14 +78,14 @@ public class GraduationService {
 	 * 아직 듣지 않은 전공필수 과목 반환 메소드(getMissingRequired)
  	 * @param missing 듣지 않은 전공필수 과목
  	 * @param takenCourseIds 이미 들은 과목들
- 	 * @return missing 듣지 않은 전공필수 과목
+ 	 * @return : 듣지 않은 전공필수 과목
 	 */
     public List<String> getMissingRequired() {
     	List<String> missing = new ArrayList<>();
         Set<String> takenCourseIds = new HashSet<>();
         
         for (TakenCourse tc : student.getTakenCourses()) {
-            if ((tc.isPassed()) && (tc.getCourse().getType() == CourseType.MAJOR_REQUIRED)) {
+            if ((tc.getPassed()) && (tc.getCourse().getType() == CourseType.MAJOR_REQUIRED)) {
                 takenCourseIds.add(tc.getCourse().getCourseName());
             }
         }
@@ -101,7 +102,7 @@ public class GraduationService {
    	 *  전체 이수율 계산 메소드(getCompletionRate)
     	 * @param sumObtained 들은 학점
     	 * @param sumMinimum 들어야 하는 최소 학점
-    	 * @return 이수율(0~1). 초과해서 이수했더라도 1.
+    	 * @return : 이수율(0~1). 초과해서 이수했더라도 1.
    	 */
     public double getCompletionRate() {
         int sumObtained = 0;
@@ -125,7 +126,8 @@ public class GraduationService {
 
     /**
    	 *  보고서 텍스트로 출력 메소드(generateReport)
-    	 * @return out 출력할 문자열
+    	 * @param out 출력할 텍스트
+    	 * @return : 출력할 문자열
    	 */
     public String generateReport() {
     	StringBuilder out = new StringBuilder();
