@@ -1,43 +1,52 @@
+/**
+ * 
+ * @Project: 졸업 요건 확인 서비스 
+ * @프로그램 설명: 
+ * 	- 졸업 요건(수업 관련 제외) 중 토익 점수를 확인하는 서비스
+ *  - 목표치를 넘겼을 경우 달성으로 판정
+ *
+ * ToeicChecklistItem.java
+ *
+ * @author Son Seonghoon
+ *
+ */
 package model;
 
 public class ToeicChecklistItem implements ChecklistItem {
-    private int targetScore;
-    private int actualScore;
-    private boolean isManuallyCompleted; // setCompleted(true) 호출 시 강제 완료 처리를 위한 변수
+	private String title;
+	private String description;
+	private int targetScore;
+	private int actualScore;
 
-    // 생성자
-    public ToeicChecklistItem(int targetScore, int actualScore) {
-        this.targetScore = targetScore;
-        this.actualScore = actualScore;
-        this.isManuallyCompleted = false;
-    }
+	/**
+	 * 객체 생성 메소드(ToeicChecklistItem)
+	 */
+	public ToeicChecklistItem() {
+		this.title = "TOEIC";
+		this.description = "토익 목표 점수 이상 달성";
+		this.targetScore = 0;
+		this.actualScore = 0;
+	}
+	
+	public ToeicChecklistItem(int targetScore) {
+		this.title = "TOEIC";
+		this.description = "토익 목표 점수 이상 달성";
+		this.targetScore = targetScore;
+		this.actualScore = 0;
+	}
 
-    // Getter & Setter for scores
-    public int getTargetScore() { return targetScore; }
-    public void setTargetScore(int targetScore) { this.targetScore = targetScore; }
+	@Override
+	public String getTitle() { return title; }
 
-    public int getActualScore() { return actualScore; }
-    public void setActualScore(int actualScore) { this.actualScore = actualScore; }
+	@Override
+	public boolean isCompleted() { return actualScore >= targetScore; }
 
-    // 인터페이스 구현 메서드들
-    @Override
-    public String getTitle() {
-        return "TOEIC 졸업 요건";
-    }
+	@Override
+	public String getDescription() { return description; }
 
-    @Override
-    public boolean isCompleted() {
-        // 실제 점수가 목표 점수 이상이거나, 강제로 완료 처리된 경우 true 반환
-        return (actualScore >= targetScore) || isManuallyCompleted;
-    }
+	public int getTargetScore() { return targetScore; }
+	public void setTargetScore(int targetScore) { this.targetScore = targetScore; }
 
-    @Override
-    public String getDescription() {
-        return "목표 점수: " + targetScore + " / 현재 점수: " + actualScore;
-    }
-
-    @Override
-    public void setCompleted(boolean completed) {
-        this.isManuallyCompleted = completed;
-    }
+	public int getActualScore() { return actualScore; }
+	public void setActualScore(int actualScore) { this.actualScore = actualScore; }
 }
