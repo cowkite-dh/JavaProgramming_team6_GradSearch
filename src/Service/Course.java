@@ -3,7 +3,7 @@
  * 조건이 되는 getter들 다른 코드에서 호출하는 방식 
  */
 
-package service;
+package model;
 
 public class Course {
 
