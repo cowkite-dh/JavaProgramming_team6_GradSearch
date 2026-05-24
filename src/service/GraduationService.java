@@ -12,19 +12,20 @@
  */
 package service;
 
-import model.*;
 import java.util.*;
+
+import model.*;
 
 public class GraduationService {
     private Student student;
-    private GraduationRequirement req;
+    private GraduationReq req;
 
     /**
 	 * 객체 생성 메소드(GraduationService)
 	 * @param student 학생 
 	 * @param req 필요 사항 
 	 */
-    public GraduationService(Student student, GraduationRequirement req) {
+    public GraduationService(Student student, GraduationReq req) {
         this.student = student;
         this.req = req;
     }
@@ -41,7 +42,7 @@ public class GraduationService {
         for (TakenCourse tc : student.getTakenCourses()) {
             Course c = tc.getCourse();
             
-            if (c.getType() == type && tc.getPassed()) {
+            if (c.getType() == type && tc.isPassed()) {
                 sum += c.getCredits();
             }
         }
@@ -85,7 +86,7 @@ public class GraduationService {
         Set<String> takenCourseIds = new HashSet<>();
         
         for (TakenCourse tc : student.getTakenCourses()) {
-            if ((tc.getPassed()) && (tc.getCourse().getType() == CourseType.MAJOR_REQUIRED)) {
+            if ((tc.isPassed()) && (tc.getCourse().getType() == CourseType.MAJOR_REQUIRED)) {
                 takenCourseIds.add(tc.getCourse().getCourseName());
             }
         }
