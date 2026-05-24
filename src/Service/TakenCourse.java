@@ -4,7 +4,7 @@
  * 이때 조건 = 다른 분 코드에 있는 거 호출하는 방식
 */
 
-package service;
+package model;
 
 public class TakenCourse {
 
