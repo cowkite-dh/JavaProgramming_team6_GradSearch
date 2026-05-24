@@ -1,4 +1,4 @@
-package service;
+package model;
 
 public enum CourseType {
     MAJOR_REQUIRED,      // 전공필수
