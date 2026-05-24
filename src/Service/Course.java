@@ -77,7 +77,11 @@ public class Course {
     }
 
     public void setGrade(int grade) {
-        this.grade = grade;
+        if (grade < 1 || grade > 4) {
+            throw new IllegalArgumentException("학년은 1~4만 가능합니다.");
+        }
+
+    this.grade = grade;
     }
 
     public void setRequired(boolean required) {
