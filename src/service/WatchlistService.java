@@ -1,3 +1,15 @@
+/**
+ * 
+ * @Project: 빈자리 알림 서비스 
+ * @프로그램 설명: 
+ *  - 크롤링한 txt를 리스트로 바꾸는 서비스
+ *  - 타입(교양 / 전공)으로 나눌 수 있음
+ *
+ * WatchlistService.java
+ *
+ * @author Son Seonghoon
+ *
+ */
 package service;
 
 import model.CourseType;
