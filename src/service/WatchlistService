@@ -1,0 +1,217 @@
+package service;
+
+import model.CourseType;
+import model.SeatCourseDetail;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.*;
+
+public class WatchlistService {
+
+	// 교양, 전공으로만 구분
+    public enum LectureGroup { MAJOR, GENERAL }
+
+    // 입력받을 파일 명
+    private static final String FILE_PATH = "seats.txt";
+
+    // 교양 코드
+    private static final Set<String> GENERAL_COURSE =
+            new HashSet<>(Arrays.asList("CLTR", "FUTR", "TCHR"));
+
+    /**
+   	 *  과목코드에서 앞 4글자 따는 메소드(AlpOnly)
+   	 	* @return 과목 코드의 앞 4글자
+   	 */
+    private String AlpOnly(String courseCode) {
+        if (courseCode == null) return "";
+        String s = courseCode.trim();
+        if (s.length() < 4) return s.toUpperCase(Locale.ROOT);
+        return s.substring(0, 4).toUpperCase(Locale.ROOT);
+    }
+
+    /**
+   	 *  과목 코드 앞 4글자를 통해 교양/전공 판별하는 메소드(isGeneralByCode)
+   	 	* @return 교양/전공
+   	 */
+    private boolean isGeneralByCode(String courseCode) {
+        return GENERAL_COURSE.contains(AlpOnly(courseCode));
+    }
+
+    /**
+     * 최종적으로 CourseType을 매핑하는 메소드(resolveCourseType)
+     * 매핑 규칙:
+     * 1) 교양이면 => 교양 선택이고 머고 그냥 교양으로 "통일"
+     * 2) 전공이면 => requirementTag로 전필/전선 구분
+     	* @param requirementTag 구분할 Tag
+     	* @param courseCode 강의 코드
+     	* @return 최종 CourseType 
+     */
+    private CourseType resolveCourseType(String requirementTag, String courseCode) {
+        // 1) 교양이면 tag 무시하고 교양으로 통일
+        if (isGeneralByCode(courseCode)) {
+            // 교양을 한 타입으로 묶는다고 했으니 하나로 고정하면 됨.
+            // GENERAL_REQUIRED로 두어도 되고, GENERAL_ELECTIVE로 두어도 됨.
+            return CourseType.GENERAL_ELECTIVE;
+        }
+
+        // 2) 전공이면 전필/전선 구분
+        String tag = (requirementTag == null) ? "" : requirementTag.trim();
+        switch (tag) {
+            case "전필":
+                return CourseType.MAJOR_REQUIRED;
+            case "전선":
+                return CourseType.MAJOR_ELECTIVE;
+            default:
+                // 전공인데 태그가 정체불명의 무언가이면 전선으로
+                return CourseType.MAJOR_ELECTIVE;
+        }
+    }
+
+    /** 그룹(전공/교양)도 prefix 최우선 규칙으로 통일 */
+    private LectureGroup toGroup(String courseCode) {
+        return isGeneralByCode(courseCode) ? LectureGroup.GENERAL : LectureGroup.MAJOR;
+    }
+
+    /**
+   	 *  파일 로드해서 리스트에 다 집어넣는 메소드(loadAll)
+   	 	* @return 파일의 정보가 다 집어넣어진 List
+   	 */
+    public List<SeatCourseDetail> loadAll() {
+        List<SeatCourseDetail> list = new ArrayList<>();
+
+        try (BufferedReader br = new BufferedReader(new FileReader(FILE_PATH))) {
+            String line;
+
+            // 읽을게 남음
+            while ((line = br.readLine()) != null) {
+            	// 줄이 비었으면 패스
+                if (line.trim().isEmpty())
+                	continue;
+
+                String[] t = line.split(",");
+                if (t.length < 17) continue;
+
+                int year = Integer.parseInt(t[0].trim()); // 년도
+                int recommendedGrade = Integer.parseInt(t[1].trim()); // 학년
+                int semesterNo = Integer.parseInt(t[2].trim()); // 학기
+
+                String requirementTag = t[3].trim(); // 태그(전선/전필/교양)
+                String collegeName = t[4].trim(); // 대학명
+                String departmentName = t[5].trim(); // 학과(학부)명
+
+                String courseCode = t[6].trim(); // 강의코드
+                String courseName = t[7].trim(); // 강의명
+
+                int lectureCredits = Integer.parseInt(t[9].trim()); // 강의 학점
+                int labCredits = Integer.parseInt(t[10].trim()); // 실습 학점
+
+                String professorName = t[11].trim(); // 교수명
+                String time = t[12].trim(); // 시간
+                String building = t[13].trim(); // 건물명
+                String room = t[14].trim(); // 강의실
+
+                int maxStudents = Integer.parseInt(t[15].trim()); // 최대 학생
+                int currentStudents = Integer.parseInt(t[16].trim()); // 현재 학생
+
+                CourseType type = resolveCourseType(requirementTag, courseCode); // 강의 타입
+
+                list.add(new SeatCourseDetail(
+                        year, recommendedGrade, semesterNo,
+                        requirementTag, collegeName, departmentName,
+                        courseCode, courseName,
+                        lectureCredits, labCredits,
+                        professorName, time, building, room,
+                        maxStudents, currentStudents,
+                        type
+                ));
+            }
+        } catch (IOException e) {
+            System.err.println("seats.txt 읽기 실패: " + e.getMessage());
+        } catch (NumberFormatException e) {
+            System.err.println("숫자 파싱 실패: " + e.getMessage());
+        }
+
+        return list;
+    }
+
+    /** 전체 출력 */
+    public String printAllCourses() {
+        List<SeatCourseDetail> list = loadAll();
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("====== 전체 강의 목록 (seats.txt) ======\n");
+        sb.append("총 ").append(list.size()).append("개\n");
+        sb.append("----------------------------------------\n");
+
+        for (SeatCourseDetail d : list) {
+            sb.append(formatDetail(d, true));
+        }
+
+        sb.append("========================================\n");
+        return sb.toString();
+    }
+
+    /** 전공/교양 중 하나만 출력 */
+    public String printCoursesByGroup(LectureGroup group) {
+        List<SeatCourseDetail> list = loadAll();
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("====== ").append(group == LectureGroup.GENERAL ? "교양" : "전공")
+          .append(" 강의 목록 (seats.txt) ======\n");
+
+        int count = 0;
+        sb.append("----------------------------------------\n");
+
+        for (SeatCourseDetail d : list) {
+            if (toGroup(d.getCourseId()) != group) continue;
+            count++;
+            sb.append(formatDetail(d, false));
+        }
+
+        sb.insert(sb.indexOf("\n") + 1, "총 " + count + "개\n");
+        if (count == 0) sb.append("(해당 그룹 강의가 없습니다)\n");
+
+        sb.append("========================================\n");
+        return sb.toString();
+    }
+
+    private String formatDetail(SeatCourseDetail d, boolean includeGroup) {
+        LectureGroup group = toGroup(d.getCourseId());
+        String groupLabel = (group == LectureGroup.GENERAL) ? "교양" : "전공";
+
+        return String.format(
+                "%d년 | 권장학년 %d | %d학기%s\n" +
+                "  - 구분(원본): %s\n" +
+                "  - 세부대학명: %s | 학과(학부)명: %s\n" +
+                "  - 강의 코드: %s | 강의명: %s\n" +
+                "  - 학점: %d (강의 %d + 실습 %d)\n" +
+                "  - 분류: %s | CourseType: %s\n" +
+                "  - 교수명: %s | 시간: %s\n" +
+                "  - 건물: %s | 호실: %s\n" +
+                "  - 최대 정원: %d | 현재 정원: %d%s\n",
+                d.getYear(),
+                d.getGrade(),
+                d.getSemesterNo(),
+                includeGroup ? (" | 그룹:" + groupLabel) : "",
+                d.getRequirementTag(),
+                d.getCollegeName(),
+                d.getDepartmentName(),
+                d.getCourseId(),
+                d.getCourseName(),
+                d.getCredits(),
+                d.getLectureCredits(),
+                d.getLabCredits(),
+                groupLabel,
+                d.getType(),
+                d.getProfessorName(),
+                d.getTime(),
+                d.getBuilding(),
+                d.getRoom(),
+                d.getMaxStudents(),
+                d.getCurrentStudents(),
+                d.hasVacancy() ? " (여석 있음)" : " (여석 없음)"
+        );
+    }
+}
